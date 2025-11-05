@@ -1,0 +1,7 @@
+{
+  "return_loss_threshold_db": -14,
+  "gain_flatness_threshold_db": 0.8,
+  "max_gain_difference_db": 0.5,
+  "max_phase_difference_degrees": 10
+}
+
