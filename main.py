@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem,
                              QFrame, QDialog)
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -321,18 +322,40 @@ class RFCombinerApp(QMainWindow):
         if compliance_results is None:
             return
         
+        # Define colors for pass/fail
+        pass_color = "#00FF00"  # Bright green
+        fail_color = "#FF0000"  # Bright red
+        
         # Return Loss
         return_loss = compliance_results['return_loss']
         rl_parent = QTreeWidgetItem(self.compliance_tree)
         rl_parent.setText(0, "Return Loss")
-        rl_parent.setText(1, "PASS" if return_loss['all_pass'] else "FAIL")
+        status_text = "✓ PASS" if return_loss['all_pass'] else "✗ FAIL"
+        rl_parent.setText(1, status_text)
         rl_parent.setText(3, f"< {self.processor.compliance_checker.return_loss_threshold_db} dB")
+        
+        # Set color for parent item
+        if return_loss['all_pass']:
+            rl_parent.setForeground(1, QApplication.instance().palette().color(QApplication.instance().palette().Base))
+            rl_parent.setBackground(1, QApplication.instance().palette().color(QApplication.instance().palette().Base))
+        else:
+            rl_parent.setForeground(1, QApplication.instance().palette().color(QApplication.instance().palette().Base))
+            rl_parent.setBackground(1, QApplication.instance().palette().color(QApplication.instance().palette().Base))
         
         for port, result in return_loss['results'].items():
             item = QTreeWidgetItem(rl_parent)
             item.setText(0, port)
-            item.setText(1, "✓ PASS" if result['pass'] else "✗ FAIL")
+            status_text = "✓ PASS" if result['pass'] else "✗ FAIL"
+            item.setText(1, status_text)
             item.setText(2, f"{result['worst_value_db']:.2f} dB")
+            
+            # Set background color for status column
+            if result['pass']:
+                item.setBackground(1, QColor(pass_color))
+                item.setForeground(1, QColor("#000000"))  # Black text on green
+            else:
+                item.setBackground(1, QColor(fail_color))
+                item.setForeground(1, QColor("#FFFFFF"))  # White text on red
         
         rl_parent.setExpanded(True)
         
@@ -340,14 +363,24 @@ class RFCombinerApp(QMainWindow):
         gain_flat = compliance_results['gain_flatness']
         gf_parent = QTreeWidgetItem(self.compliance_tree)
         gf_parent.setText(0, "Gain Flatness")
-        gf_parent.setText(1, "PASS" if gain_flat['all_pass'] else "FAIL")
+        status_text = "✓ PASS" if gain_flat['all_pass'] else "✗ FAIL"
+        gf_parent.setText(1, status_text)
         gf_parent.setText(3, f"< {self.processor.compliance_checker.gain_flatness_threshold_db} dB")
         
         for branch, result in gain_flat['results'].items():
             item = QTreeWidgetItem(gf_parent)
             item.setText(0, branch)
-            item.setText(1, "✓ PASS" if result['pass'] else "✗ FAIL")
+            status_text = "✓ PASS" if result['pass'] else "✗ FAIL"
+            item.setText(1, status_text)
             item.setText(2, f"{result['p2p_variation_db']:.3f} dB")
+            
+            # Set background color for status column
+            if result['pass']:
+                item.setBackground(1, QColor(pass_color))
+                item.setForeground(1, QColor("#000000"))  # Black text on green
+            else:
+                item.setBackground(1, QColor(fail_color))
+                item.setForeground(1, QColor("#FFFFFF"))  # White text on red
         
         gf_parent.setExpanded(True)
         
@@ -355,17 +388,35 @@ class RFCombinerApp(QMainWindow):
         max_gain = compliance_results['max_gain_difference']
         max_gain_item = QTreeWidgetItem(self.compliance_tree)
         max_gain_item.setText(0, "Max Gain Difference")
-        max_gain_item.setText(1, "✓ PASS" if max_gain['all_pass'] else "✗ FAIL")
+        status_text = "✓ PASS" if max_gain['all_pass'] else "✗ FAIL"
+        max_gain_item.setText(1, status_text)
         max_gain_item.setText(2, f"{max_gain['worst_difference_db']:.3f} dB")
         max_gain_item.setText(3, f"< {max_gain['threshold_db']} dB")
+        
+        # Set color for max gain difference
+        if max_gain['all_pass']:
+            max_gain_item.setBackground(1, QColor(pass_color))
+            max_gain_item.setForeground(1, QColor("#000000"))
+        else:
+            max_gain_item.setBackground(1, QColor(fail_color))
+            max_gain_item.setForeground(1, QColor("#FFFFFF"))
         
         # Max Phase Difference
         max_phase = compliance_results['max_phase_difference']
         max_phase_item = QTreeWidgetItem(self.compliance_tree)
         max_phase_item.setText(0, "Max Phase Difference")
-        max_phase_item.setText(1, "✓ PASS" if max_phase['all_pass'] else "✗ FAIL")
+        status_text = "✓ PASS" if max_phase['all_pass'] else "✗ FAIL"
+        max_phase_item.setText(1, status_text)
         max_phase_item.setText(2, f"{max_phase['worst_difference_degrees']:.2f}°")
         max_phase_item.setText(3, f"< {max_phase['threshold_degrees']}°")
+        
+        # Set color for max phase difference
+        if max_phase['all_pass']:
+            max_phase_item.setBackground(1, QColor(pass_color))
+            max_phase_item.setForeground(1, QColor("#000000"))
+        else:
+            max_phase_item.setBackground(1, QColor(fail_color))
+            max_phase_item.setForeground(1, QColor("#FFFFFF"))
     
     def copy_compliance_table(self):
         """Copy compliance table to clipboard."""

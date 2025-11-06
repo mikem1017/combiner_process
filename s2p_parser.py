@@ -33,7 +33,8 @@ class S2PParser:
         filename = os.path.basename(filepath)
         
         # Pattern: YYYYMMDD_COMBINER_SNXXXX_Path_01_02_AMB.S2P (case-insensitive)
-        pattern = r'(\d{8})_COMBINER_(SN\d+)_(Path_\d{2}_\d{2})_([A-Z]+)\.s2p'
+        # Allow both uppercase and lowercase for environment and extension
+        pattern = r'(\d{8})_COMBINER_(SN\d+)_(Path_\d{2}_\d{2})_([A-Za-z]+)\.s2p'
         match = re.match(pattern, filename, re.IGNORECASE)
         
         if not match:
@@ -89,7 +90,13 @@ class S2PParser:
         # Parse all filenames and organize by port path
         file_data = {}
         for filepath in filepaths:
-            metadata = self.parse_filename(filepath)
+            try:
+                metadata = self.parse_filename(filepath)
+            except ValueError as e:
+                # If filename parsing fails, try to extract what we can
+                filename = os.path.basename(filepath)
+                raise ValueError(f"Failed to parse filename '{filename}': {str(e)}")
+            
             port_path = metadata['port_path']
             
             if port_path not in self.EXPECTED_PATHS:
@@ -149,8 +156,9 @@ class S2PParser:
             all_metadata[port_path] = file_data[port_path]['metadata']
         
         # Store metadata (use first file's metadata for common fields)
-        # Handle cases where metadata parsing might have failed
-        first_metadata = all_metadata.get('Path_01_02', {}).get('metadata', {})
+        # all_metadata[port_path] is already the metadata dict
+        first_metadata = all_metadata.get('Path_01_02', {})
+        
         result_metadata = {
             'date': first_metadata.get('date', 'Unknown'),
             'serial_number': first_metadata.get('serial_number', 'Unknown'),
