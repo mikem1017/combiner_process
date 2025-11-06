@@ -27,10 +27,15 @@ class BackendProcessor:
         self.s_params = None
         self.metadata = None
         self.compliance_results = None
+        self.path_labels = {}  # Path labels for plot legends
         
         # Default frequency range (Hz)
         self.default_x_min = 2.5e9
         self.default_x_max = 4.3e9
+        
+        # Compliance check frequency range (Hz) - different from plot range
+        self.compliance_x_min = 2.7e9
+        self.compliance_x_max = 4.1e9
     
     def process_files(self, filepaths: List[str]) -> Dict:
         """
@@ -54,6 +59,7 @@ class BackendProcessor:
             self.frequency = data['frequency']
             self.s_params = data['s_params']
             self.metadata = data['metadata']
+            self.path_labels = data.get('path_labels', {})  # Path labels for legends
             
             # Get file list for display
             file_list = [Path(f).name for f in filepaths]
@@ -81,8 +87,7 @@ class BackendProcessor:
         try:
             date = metadata.get('date', 'N/A')
             serial = metadata.get('serial_number', 'N/A')
-            env = metadata.get('environment', 'N/A')
-            return f"Date: {date} | SN: {serial} | Env: {env}"
+            return f"Date: {date} | SN: {serial}"
         except Exception:
             return "Metadata parsing error"
     
@@ -182,19 +187,19 @@ class BackendProcessor:
             
             # Generate all 4 plots
             self.plotter.plot_sxx_return_loss(
-                frequency, s_params, x_min, x_max, ax=axes[0]
+                frequency, s_params, x_min, x_max, ax=axes[0], path_labels=self.path_labels
             )
             
             self.plotter.plot_sxy_thru_paths(
-                frequency, s_params, x_min, x_max, ax=axes[1]
+                frequency, s_params, x_min, x_max, ax=axes[1], path_labels=self.path_labels
             )
             
             self.plotter.plot_branch_to_branch_magnitude(
-                frequency, s_params, x_min, x_max, ax=axes[2]
+                frequency, s_params, x_min, x_max, ax=axes[2], path_labels=self.path_labels
             )
             
             self.plotter.plot_branch_to_branch_phase(
-                frequency, s_params, x_min, x_max, ax=axes[3]
+                frequency, s_params, x_min, x_max, ax=axes[3], path_labels=self.path_labels
             )
             
             return {'success': True}
@@ -214,8 +219,8 @@ class BackendProcessor:
         Run all compliance checks.
         
         Args:
-            x_min: Minimum frequency in Hz
-            x_max: Maximum frequency in Hz
+            x_min: Minimum frequency in Hz (default: 2.7 GHz for compliance)
+            x_max: Maximum frequency in Hz (default: 4.1 GHz for compliance)
             
         Returns:
             Dictionary with:
@@ -230,11 +235,11 @@ class BackendProcessor:
             }
         
         try:
-            # Use provided limits or defaults
+            # Use provided limits or compliance defaults (not plot defaults)
             if x_min is None:
-                x_min = self.default_x_min
+                x_min = self.compliance_x_min
             if x_max is None:
-                x_max = self.default_x_max
+                x_max = self.compliance_x_max
             
             # Run compliance checks
             self.compliance_results = self.compliance_checker.check_all(

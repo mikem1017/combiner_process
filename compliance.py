@@ -247,9 +247,15 @@ class ComplianceChecker:
         branch_phases_array = np.array(branch_phases)
         
         # Calculate max difference at each frequency point
+        # Handle phase wraparound: if difference > 180°, check if 360° - difference is smaller
         max_vals = np.max(branch_phases_array, axis=0)
         min_vals = np.min(branch_phases_array, axis=0)
         diff_at_each_freq = max_vals - min_vals
+        
+        # Handle phase wraparound: if difference is > 180°, the actual difference might be 360° - diff
+        # Take the minimum of the two possibilities
+        wrapped_diff = 360 - diff_at_each_freq
+        diff_at_each_freq = np.minimum(diff_at_each_freq, wrapped_diff)
         
         # Find worst-case difference
         worst_diff = np.max(diff_at_each_freq)

@@ -46,7 +46,8 @@ class Plotter:
         s_params: Dict[str, np.ndarray],
         x_min: Optional[float] = None,
         x_max: Optional[float] = None,
-        ax: Optional[plt.Axes] = None
+        ax: Optional[plt.Axes] = None,
+        path_labels: Optional[Dict[str, str]] = None
     ) -> Tuple[Figure, plt.Axes]:
         """
         Plot Sxx (Return Loss) for all ports.
@@ -70,7 +71,9 @@ class Plotter:
             s_key = f'S{i}{i}'
             if s_key in s_params:
                 sxx_db = self._magnitude_db(s_params[s_key])
-                ax.plot(freq_ghz, sxx_db, label=s_key, linewidth=1.5, alpha=0.8)
+                # Use path label if available, otherwise use S-parameter key
+                label = path_labels.get(s_key, s_key) if path_labels else s_key
+                ax.plot(freq_ghz, sxx_db, label=label, linewidth=1.5, alpha=0.8)
         
         ax.set_xlabel('Frequency (GHz)', fontsize=12)
         ax.set_ylabel('Return Loss (dB)', fontsize=12)
@@ -93,7 +96,8 @@ class Plotter:
         s_params: Dict[str, np.ndarray],
         x_min: Optional[float] = None,
         x_max: Optional[float] = None,
-        ax: Optional[plt.Axes] = None
+        ax: Optional[plt.Axes] = None,
+        path_labels: Optional[Dict[str, str]] = None
     ) -> Tuple[Figure, plt.Axes]:
         """
         Plot Sxy (Thru Paths) from input to each output.
@@ -112,7 +116,9 @@ class Plotter:
             s_key = f'S{i}1'
             if s_key in s_params:
                 sxy_db = self._magnitude_db(s_params[s_key])
-                ax.plot(freq_ghz, sxy_db, label=s_key, linewidth=1.5, alpha=0.8)
+                # Use path label if available, otherwise use S-parameter key
+                label = path_labels.get(s_key, s_key) if path_labels else s_key
+                ax.plot(freq_ghz, sxy_db, label=label, linewidth=1.5, alpha=0.8)
         
         ax.set_xlabel('Frequency (GHz)', fontsize=12)
         ax.set_ylabel('Insertion Loss / Gain (dB)', fontsize=12)
@@ -135,7 +141,8 @@ class Plotter:
         s_params: Dict[str, np.ndarray],
         x_min: Optional[float] = None,
         x_max: Optional[float] = None,
-        ax: Optional[plt.Axes] = None
+        ax: Optional[plt.Axes] = None,
+        path_labels: Optional[Dict[str, str]] = None
     ) -> Tuple[Figure, plt.Axes]:
         """
         Plot Branch-to-Branch Magnitude relative to S21.
@@ -153,6 +160,9 @@ class Plotter:
         freq_ghz = self._convert_to_ghz(frequency)
         s21_mag = np.abs(s_params['S21'])
         
+        # Get reference label
+        ref_label = path_labels.get('S21', 'S21') if path_labels else 'S21'
+        
         # Calculate relative magnitude for each branch
         for i in range(3, 11):
             s_key = f'S{i}1'
@@ -160,9 +170,11 @@ class Plotter:
                 sxy_mag = np.abs(s_params[s_key])
                 # dB(S(xy)/S(21)) = 20*log10(|S(x1)| / |S21|)
                 relative_mag_db = 20 * np.log10(sxy_mag / s21_mag)
-                ax.plot(freq_ghz, relative_mag_db, label=s_key, linewidth=1.5, alpha=0.8)
+                # Use path label if available, otherwise use S-parameter key
+                label = path_labels.get(s_key, s_key) if path_labels else s_key
+                ax.plot(freq_ghz, relative_mag_db, label=label, linewidth=1.5, alpha=0.8)
         
-        ax.axhline(y=0, color='k', linestyle='--', linewidth=1, alpha=0.5, label='Reference (S21)')
+        ax.axhline(y=0, color='k', linestyle='--', linewidth=1, alpha=0.5, label=f'Reference ({ref_label})')
         ax.set_xlabel('Frequency (GHz)', fontsize=12)
         ax.set_ylabel('Relative Magnitude (dB)', fontsize=12)
         ax.set_title('Branch-to-Branch Magnitude (Relative to S21)', fontsize=14, fontweight='bold')
@@ -187,7 +199,8 @@ class Plotter:
         s_params: Dict[str, np.ndarray],
         x_min: Optional[float] = None,
         x_max: Optional[float] = None,
-        ax: Optional[plt.Axes] = None
+        ax: Optional[plt.Axes] = None,
+        path_labels: Optional[Dict[str, str]] = None
     ) -> Tuple[Figure, plt.Axes]:
         """
         Plot Branch-to-Branch Phase relative to S21.
@@ -205,6 +218,9 @@ class Plotter:
         freq_ghz = self._convert_to_ghz(frequency)
         s21_phase = np.angle(s_params['S21'])
         
+        # Get reference label
+        ref_label = path_labels.get('S21', 'S21') if path_labels else 'S21'
+        
         # Calculate relative phase for each branch
         for i in range(3, 11):
             s_key = f'S{i}1'
@@ -212,9 +228,11 @@ class Plotter:
                 sxy_phase = np.angle(s_params[s_key])
                 # phase(S(xy)/S(21)) = phase(S(x1)) - phase(S21)
                 relative_phase_deg = (sxy_phase - s21_phase) * 180 / np.pi
-                ax.plot(freq_ghz, relative_phase_deg, label=s_key, linewidth=1.5, alpha=0.8)
+                # Use path label if available, otherwise use S-parameter key
+                label = path_labels.get(s_key, s_key) if path_labels else s_key
+                ax.plot(freq_ghz, relative_phase_deg, label=label, linewidth=1.5, alpha=0.8)
         
-        ax.axhline(y=0, color='k', linestyle='--', linewidth=1, alpha=0.5, label='Reference (S21)')
+        ax.axhline(y=0, color='k', linestyle='--', linewidth=1, alpha=0.5, label=f'Reference ({ref_label})')
         ax.set_xlabel('Frequency (GHz)', fontsize=12)
         ax.set_ylabel('Relative Phase (degrees)', fontsize=12)
         ax.set_title('Branch-to-Branch Phase (Relative to S21)', fontsize=14, fontweight='bold')

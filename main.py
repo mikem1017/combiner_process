@@ -255,7 +255,7 @@ class RFCombinerApp(QMainWindow):
                 window = self.plot_windows["Return Loss (Sxx)"]
                 window.ax.clear()
                 self.processor.plotter.plot_sxx_return_loss(
-                    frequency, s_params, x_min, x_max, ax=window.ax
+                    frequency, s_params, x_min, x_max, ax=window.ax, path_labels=self.processor.path_labels
                 )
                 window.canvas.draw()
             
@@ -264,7 +264,7 @@ class RFCombinerApp(QMainWindow):
                 window = self.plot_windows["Thru Paths (Sxy)"]
                 window.ax.clear()
                 self.processor.plotter.plot_sxy_thru_paths(
-                    frequency, s_params, x_min, x_max, ax=window.ax
+                    frequency, s_params, x_min, x_max, ax=window.ax, path_labels=self.processor.path_labels
                 )
                 window.canvas.draw()
             
@@ -273,7 +273,7 @@ class RFCombinerApp(QMainWindow):
                 window = self.plot_windows["Branch-to-Branch Magnitude"]
                 window.ax.clear()
                 self.processor.plotter.plot_branch_to_branch_magnitude(
-                    frequency, s_params, x_min, x_max, ax=window.ax
+                    frequency, s_params, x_min, x_max, ax=window.ax, path_labels=self.processor.path_labels
                 )
                 window.canvas.draw()
             
@@ -282,7 +282,7 @@ class RFCombinerApp(QMainWindow):
                 window = self.plot_windows["Branch-to-Branch Phase"]
                 window.ax.clear()
                 self.processor.plotter.plot_branch_to_branch_phase(
-                    frequency, s_params, x_min, x_max, ax=window.ax
+                    frequency, s_params, x_min, x_max, ax=window.ax, path_labels=self.processor.path_labels
                 )
                 window.canvas.draw()
             
@@ -297,12 +297,9 @@ class RFCombinerApp(QMainWindow):
     def run_compliance_checks(self):
         """Run compliance checks - calls backend processor."""
         try:
-            # Get axis limits from GUI
-            x_min = float(self.x_min_edit.text()) * 1e9
-            x_max = float(self.x_max_edit.text()) * 1e9
-            
-            # Run checks using backend processor
-            result = self.processor.run_compliance_checks(x_min, x_max)
+            # Compliance checks use fixed frequency range (2.7-4.1 GHz)
+            # Don't use the plot axis limits for compliance
+            result = self.processor.run_compliance_checks()
             
             if not result['success']:
                 QMessageBox.critical(self, "Error", result['error'])
